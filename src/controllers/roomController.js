@@ -1,7 +1,8 @@
 import Room from "../models/Room.js";
 import User from "../models/User.js";
+import { nanoid } from "nanoid"; 
 
-// create room
+// Create room
 export const createRoom = async (req, res) => {
   try {
     const { type, userId } = req.body;
@@ -10,70 +11,55 @@ export const createRoom = async (req, res) => {
     }
 
     const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Generate unique common roomId
+    const roomId = nanoid(12);
 
     const newRoom = new Room({
-      type, // 2 or 4
-      players: [{ userId: user._id, userName: user.username }], // username DB se liya
+      roomId, // common roomId
+      type,   // 2 or 4
+      players: [{ userId: user._id, userName: user.username }],
       status: "waiting",
     });
 
     await newRoom.save();
-    const roomObj = newRoom.toObject();
-    roomObj.roomId = roomObj._id; // add roomId field
-    delete roomObj._id; // remove _id field
-    res.status(201).json({ message: "Room created successfully", room: roomObj });
+    res.status(201).json({ message: "Room created successfully", room: newRoom });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
-
-// get all rooms
+// Get all rooms
 export const getRooms = async (req, res) => {
   try {
-    const rooms = await Room.find().lean(); // lean() converts to plain JS Objects
-    const formattedRooms = rooms.map(room => ({
-      roomId: room._id, // add roomId field
-      type: room.type,
-      players: room.players,
-      status: room.status,
-      createdAt: room.createdAt,
-      __v: room.__v
-    }));
-    res.json({ rooms: formattedRooms });
+    const rooms = await Room.find().lean();
+    res.json({ rooms });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
-// get room by id
-// get room details by roomId
-export const getRoomById = async (req, res) => {
+// Get room by custom roomId
+export const getRoomByRoomId = async (req, res) => {
   try {
-    const roomId = req.params.id;
-    const room = await Room.findById(roomId).lean(); // lean() to get plain JS object
-    if (!room) {
-      return res.status(404).json({ message: "Room not found" });
-    }
+    const { id } = req.params;
+    const room = await Room.findOne({ roomId: id }).lean();
+    if (!room) return res.status(404).json({ message: "Room not found" });
 
-    // Add roomId field for frontend
-    const roomObj = { ...room, roomId: room._id };
-    delete roomObj._id;
-
-    res.json({ message: "Room details fetched successfully", room: roomObj });
+    res.json({ message: "Room fetched successfully", room });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
-// join room
+// Join room
 export const joinRoom = async (req, res) => {
   try {
     const { userId } = req.body;
-    const room = await Room.findById(req.params.id);
+    const { id } = req.params;
+
+    const room = await Room.findOne({ roomId: id });
     if (!room) return res.status(404).json({ message: "Room not found" });
 
     const user = await User.findById(userId);
@@ -84,15 +70,12 @@ export const joinRoom = async (req, res) => {
       return res.status(400).json({ message: "Room is full" });
     }
 
-    // check if user already exists
     if (room.players.some(p => p.userId.toString() === userId)) {
       return res.status(400).json({ message: "User already in the room" });
     }
 
     room.players.push({ userId: user._id, userName: user.username });
-    if (room.players.length === maxPlayers) {
-      room.status = "full";
-    }
+    if (room.players.length === maxPlayers) room.status = "full";
 
     await room.save();
     res.json({ message: "Joined room successfully", room });
@@ -101,12 +84,11 @@ export const joinRoom = async (req, res) => {
   }
 };
 
-
-
 // Delete room
 export const deleteRoom = async (req, res) => {
   try {
-    const room = await Room.findByIdAndDelete(req.params.id);
+    const { id } = req.params;
+    const room = await Room.findOneAndDelete({ roomId: id });
     if (!room) return res.status(404).json({ message: "Room not found" });
     res.json({ message: "Room deleted successfully" });
   } catch (err) {
