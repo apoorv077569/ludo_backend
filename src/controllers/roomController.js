@@ -49,6 +49,26 @@ export const getRooms = async (req, res) => {
   }
 };
 
+// get room by id
+// get room details by roomId
+export const getRoomById = async (req, res) => {
+  try {
+    const roomId = req.params.id;
+    const room = await Room.findById(roomId).lean(); // lean() to get plain JS object
+    if (!room) {
+      return res.status(404).json({ message: "Room not found" });
+    }
+
+    // Add roomId field for frontend
+    const roomObj = { ...room, roomId: room._id };
+    delete roomObj._id;
+
+    res.json({ message: "Room details fetched successfully", room: roomObj });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
 // join room
 export const joinRoom = async (req, res) => {
   try {
