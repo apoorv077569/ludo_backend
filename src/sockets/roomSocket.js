@@ -10,6 +10,10 @@ const roomSocket = (io, socket) => {
 
     try {
       // Fetch user from DB
+      if(![2,4].includes(type)){
+        console.log("Invalid room type: ",type);
+        return socket.emit("error", "Invalid room type.Allowed types are 2 or 4");
+      }
       const user = await User.findById(userId);
       if (!user) {
         console.log("❌ User not found:", userId);
@@ -23,6 +27,13 @@ const roomSocket = (io, socket) => {
 
       if (room) {
         console.log("🟢 Found waiting room:", room._id);
+        
+        const alreadyInRoom = room.players.some(p => p.userId.toString() === user._id.toString());
+        if(alreadyInRoom) {
+          console.log("Error","User already in room:");
+          return socket.emit("error", "User already in room");
+        }
+
         room.players.push({ userId: user._id, username: user.username });
 
         if (room.players.length === type) {
