@@ -48,6 +48,27 @@ export const getRooms = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+// get room by id
+
+// get room details by roomId (not MongoDB _id)
+export const getRoomById = async (req, res) => {
+  try {
+    const { id: roomId } = req.params; // frontend se jo roomId aayega
+    const room = await Room.findOne({ roomId }).lean(); // MongoDB me roomId field se search
+
+    if (!room) {
+      return res.status(404).json({ message: "Room not found" });
+    }
+
+    // remove _id field, add roomId
+    const roomObj = { ...room, roomId: room.roomId };
+    delete roomObj._id;
+
+    res.json({ message: "Room details fetched successfully", room: roomObj });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
 
 // join room
 export const joinRoom = async (req, res) => {
