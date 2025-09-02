@@ -59,7 +59,7 @@ export const joinRoom = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const maxPlayers = room.type === "two" ? "two" : "four";
+    const maxPlayers = room.type === 2 ? 2 : 4;
     if (room.players.length >= maxPlayers) {
       return res.status(400).json({ message: "Room is full" });
     }

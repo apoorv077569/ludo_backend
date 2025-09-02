@@ -8,7 +8,7 @@ const roomSchema = new mongoose.Schema({
     default: () => new mongoose.Types.ObjectId().toString()
   },
   type: {
-    type: String,
+    type: Number,
     required: true
   }, // 2 player or 4 player
   players: [
