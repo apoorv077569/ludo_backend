@@ -3,7 +3,7 @@ import Room from "../models/Room.js";
 const roomSocket = (io, socket) => {
   console.log("🔥 Socket connected:", socket.id);
 
-  socket.on("joingame", async ({ userId, type }) => {
+  socket.on("joingame", async ({ userId, type, username }) => {
     console.log("🎯 joingame event received:", { userId, type });
 
     try {
