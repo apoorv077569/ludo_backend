@@ -1,6 +1,16 @@
 import Room from "../models/Room.js";
 import User from "../models/User.js";
 
+// 🔹 Helper to format room consistently
+const formatRoom = (room) => ({
+  roomId: room._id,
+  type: room.type,
+  players: room.players,
+  status: room.status,
+  createdAt: room.createdAt,
+  updatedAt: room.updatedAt,
+});
+
 // ✅ Create Room
 export const createRoom = async (req, res) => {
   try {
@@ -9,13 +19,17 @@ export const createRoom = async (req, res) => {
       return res.status(400).json({ message: "type and userId are required" });
     }
 
+    if (![2, 4].includes(type)) {
+      return res.status(400).json({ message: "Invalid room type. Allowed values are 2 or 4" });
+    }
+
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
     const newRoom = new Room({
-      type, // 2 or 4
+      type,
       players: [{ userId: user._id, username: user.username }],
       status: "waiting",
     });
@@ -24,14 +38,7 @@ export const createRoom = async (req, res) => {
 
     res.status(201).json({
       message: "Room created successfully",
-      room: {
-        roomId: newRoom._id, // 👈 ek hi ID use karenge
-        type: newRoom.type,
-        players: newRoom.players,
-        status: newRoom.status,
-        createdAt: newRoom.createdAt,
-        updatedAt: newRoom.updatedAt,
-      },
+      room: formatRoom(newRoom),
     });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
@@ -42,17 +49,7 @@ export const createRoom = async (req, res) => {
 export const getRooms = async (req, res) => {
   try {
     const rooms = await Room.find().lean();
-
-    const formattedRooms = rooms.map(room => ({
-      roomId: room._id,
-      type: room.type,
-      players: room.players,
-      status: room.status,
-      createdAt: room.createdAt,
-      updatedAt: room.updatedAt,
-    }));
-
-    res.json({ rooms: formattedRooms });
+    res.json({ rooms: rooms.map(formatRoom) });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
@@ -68,16 +65,10 @@ export const getRoomById = async (req, res) => {
       return res.status(404).json({ message: "Room not found" });
     }
 
-    const roomObj = {
-      roomId: room._id,
-      type: room.type,
-      players: room.players,
-      status: room.status,
-      createdAt: room.createdAt,
-      updatedAt: room.updatedAt,
-    };
-
-    res.json({ message: "Room details fetched successfully", room: roomObj });
+    res.json({
+      message: "Room details fetched successfully",
+      room: formatRoom(room),
+    });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
@@ -94,12 +85,12 @@ export const joinRoom = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const maxPlayers = room.type === 2 ? 2 : 4;
+
     if (room.players.length >= maxPlayers) {
       return res.status(400).json({ message: "Room is full" });
     }
 
-    // check if user already exists
-    if (room.players.some(p => p.userId.toString() === userId)) {
+    if (room.players.some((p) => p.userId.toString() === userId)) {
       return res.status(400).json({ message: "User already in the room" });
     }
 
@@ -112,14 +103,7 @@ export const joinRoom = async (req, res) => {
 
     res.json({
       message: "Joined room successfully",
-      room: {
-        roomId: room._id,
-        type: room.type,
-        players: room.players,
-        status: room.status,
-        createdAt: room.createdAt,
-        updatedAt: room.updatedAt,
-      },
+      room: formatRoom(room),
     });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
