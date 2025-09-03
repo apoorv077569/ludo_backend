@@ -16,7 +16,7 @@ export const createRoom = async (req, res) => {
 
     const newRoom = new Room({
       type, // 2 or 4
-      players: [{ userId: user._id, userName: user.username }], // username DB se liya
+      players: [{ userId: user._id, username: user.username }], // username DB se liya
       status: "waiting",
     });
 
