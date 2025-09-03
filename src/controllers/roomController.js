@@ -90,7 +90,7 @@ export const joinRoom = async (req, res) => {
       return res.status(400).json({ message: "User already in the room" });
     }
 
-    room.players.push({ userId: user._id, userName: user.username });
+    room.players.push({ userId: user._id, username: user.username });
     if (room.players.length === maxPlayers) {
       room.status = "full";
     }
