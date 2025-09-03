@@ -3,11 +3,12 @@ import Room from "../models/Room.js";
 const roomSocket = (io, socket) => {
   console.log("🔥 Socket connected:", socket.id);
 
-  socket.on("joingame", async ({ userId, username, type }) => {
-    console.log("🎯 joingame event received:", { userId, username, type });
+  socket.on("joingame", async ({ userId, type }) => {
+    console.log("🎯 joingame event received:", { userId, type });
 
     try {
       if (![2, 4].includes(type)) {
+        console.log("Invalid room type:", type);
         return socket.emit("error", "Invalid room type. Allowed types are 2 or 4");
       }
 
@@ -17,18 +18,16 @@ const roomSocket = (io, socket) => {
       if (room) {
         console.log("🟢 Found waiting room:", room._id);
 
-        const alreadyInRoom = room.players.some(
-          p => p.userId.toString() === userId.toString()
-        );
+        const alreadyInRoom = room.players.some(p => p.userId === userId);
         if (alreadyInRoom) {
+          console.log("❌ User already in room:", userId);
           return socket.emit("error", "User already in room");
         }
 
-        // ✅ Add user with username from frontend
         room.players.push({ userId, username });
-
         if (room.players.length === type) {
           room.status = "full";
+          console.log("🎉 Room full now:", room._id);
         }
 
         await room.save();
@@ -36,7 +35,7 @@ const roomSocket = (io, socket) => {
         console.log("⚪ No room found, creating new room...");
         room = new Room({
           type,
-          players: [{ userId, username }], // ✅ save username too
+          players: [{ userId }],
           status: "waiting",
         });
         await room.save();
