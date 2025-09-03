@@ -1,7 +1,7 @@
 import Room from "../models/Room.js";
 import User from "../models/User.js";
 
-// create room
+// ✅ Create Room
 export const createRoom = async (req, res) => {
   try {
     const { type, userId } = req.body;
@@ -16,53 +16,66 @@ export const createRoom = async (req, res) => {
 
     const newRoom = new Room({
       type, // 2 or 4
-      players: [{ userId: user._id, username: user.username }], // username DB se liya
+      players: [{ userId: user._id, username: user.username }],
       status: "waiting",
     });
 
     await newRoom.save();
-    const roomObj = newRoom.toObject();
-    roomObj.roomId = roomObj._id; // add roomId field
-    delete roomObj._id; // remove _id field
-    res.status(201).json({ message: "Room created successfully", room: roomObj });
+
+    res.status(201).json({
+      message: "Room created successfully",
+      room: {
+        roomId: newRoom._id, // 👈 ek hi ID use karenge
+        type: newRoom.type,
+        players: newRoom.players,
+        status: newRoom.status,
+        createdAt: newRoom.createdAt,
+        updatedAt: newRoom.updatedAt,
+      },
+    });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
-
-// get all rooms
+// ✅ Get All Rooms
 export const getRooms = async (req, res) => {
   try {
-    const rooms = await Room.find().lean(); // lean() converts to plain JS Objects
+    const rooms = await Room.find().lean();
+
     const formattedRooms = rooms.map(room => ({
-      roomId: room._id, // add roomId field
+      roomId: room._id,
       type: room.type,
       players: room.players,
       status: room.status,
       createdAt: room.createdAt,
-      __v: room.__v
+      updatedAt: room.updatedAt,
     }));
+
     res.json({ rooms: formattedRooms });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
-// get room by id
 
-// get room details by roomId (not MongoDB _id)
+// ✅ Get Room By ID
 export const getRoomById = async (req, res) => {
   try {
-    const { id: roomId } = req.params; // frontend se jo roomId aayega
-    const room = await Room.findOne({ roomId }).lean(); // MongoDB me roomId field se search
+    const { id: roomId } = req.params;
 
+    const room = await Room.findById(roomId).lean();
     if (!room) {
       return res.status(404).json({ message: "Room not found" });
     }
 
-    // remove _id field, add roomId
-    const roomObj = { ...room, roomId: room.roomId };
-    delete roomObj._id;
+    const roomObj = {
+      roomId: room._id,
+      type: room.type,
+      players: room.players,
+      status: room.status,
+      createdAt: room.createdAt,
+      updatedAt: room.updatedAt,
+    };
 
     res.json({ message: "Room details fetched successfully", room: roomObj });
   } catch (err) {
@@ -70,7 +83,7 @@ export const getRoomById = async (req, res) => {
   }
 };
 
-// join room
+// ✅ Join Room
 export const joinRoom = async (req, res) => {
   try {
     const { userId } = req.body;
@@ -96,19 +109,29 @@ export const joinRoom = async (req, res) => {
     }
 
     await room.save();
-    res.json({ message: "Joined room successfully", room });
+
+    res.json({
+      message: "Joined room successfully",
+      room: {
+        roomId: room._id,
+        type: room.type,
+        players: room.players,
+        status: room.status,
+        createdAt: room.createdAt,
+        updatedAt: room.updatedAt,
+      },
+    });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
-
-
-// Delete room
+// ✅ Delete Room
 export const deleteRoom = async (req, res) => {
   try {
     const room = await Room.findByIdAndDelete(req.params.id);
     if (!room) return res.status(404).json({ message: "Room not found" });
+
     res.json({ message: "Room deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });

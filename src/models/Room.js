@@ -1,25 +1,29 @@
 import mongoose from "mongoose";
 
-const roomSchema = new mongoose.Schema({
-  roomId: {
-    type: String,
-    unique:true,
-    required : true,
-    default: () => new mongoose.Types.ObjectId().toString()
+const roomSchema = new mongoose.Schema(
+  {
+    type: {
+      type: Number,
+      required: true,
+    }, // 2 player or 4 player
+    players: [
+      {
+        _id: false,
+        userId: mongoose.Schema.Types.ObjectId,
+        username: String,
+      },
+    ],
+    status: { type: String, default: "waiting" },
   },
-  type: {
-    type: Number,
-    required: true
-  }, // 2 player or 4 player
-  players: [
-    {
-      _id: false,
-      userId: mongoose.Schema.Types.ObjectId,
-      username: String,
-    },
-  ],
-  status: { type: String, default: "Waiting" },
-  createdAt: { type: Date, default: Date.now }
-}, { timestamps: true });
-const Room = mongoose.model("Room",roomSchema,"rooms");
+  { timestamps: true }
+);
+
+// 👇 Auto-update status before save
+roomSchema.pre("save", function (next) {
+  const maxPlayers = this.type === 2 ? 2 : 4;
+  this.status = this.players.length >= maxPlayers ? "full" : "waiting";
+  next();
+});
+
+const Room = mongoose.model("Room", roomSchema, "rooms");
 export default Room;
