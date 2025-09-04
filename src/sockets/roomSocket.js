@@ -62,6 +62,31 @@ const roomSocket = (io, socket) => {
       socket.emit("error", "Failed to join/create room");
     }
   });
+  socket.on("leavegame", async ({ userId }) => {
+  try {
+    const room = await Room.findOne({ "players.userId": userId });
+    if (!room) {
+      return socket.emit("error", "User not in any room");
+    }
+
+    // Room already updated via API → just emit latest state
+    const formattedRoom = {
+      roomId: room._id,
+      type: room.type,
+      players: room.players,
+      status: room.status,
+    };
+
+    io.to(room._id.toString()).emit("roomUpdate", formattedRoom);
+    socket.leave(room._id.toString());
+
+    console.log(`👋 User ${userId} left room ${room._id} (socket notified)`);
+  } catch (err) {
+    console.error("❌ Error in leavegame:", err);
+    socket.emit("error", "Failed to notify leave");
+  }
+});
+
 };
 
 export default roomSocket;

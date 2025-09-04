@@ -1,5 +1,5 @@
 import express from "express";
-import { createRoom, joinRoom, deleteRoom, getRooms, getRoomById, getRoomByUserId } from "../controllers/roomController.js";
+import { createRoom, joinRoom, deleteRoom, getRooms, getRoomById, getRoomByUserId,leaveRoom } from "../controllers/roomController.js";
 
 const roomRouter = express.Router();
 
@@ -9,6 +9,7 @@ roomRouter.get("/", getRooms);          // get all roomsq
 roomRouter.put("/join/:id", joinRoom); // join room
 roomRouter.delete("/delete/:id", deleteRoom); // delete room
 roomRouter.get("/:id", getRoomById);
-roomRouter.get("/user/:userId", getRoomByUserId) // get room by id
+roomRouter.get("/user/:userId", getRoomByUserId);
+roomRouter.post("/:id/leave", leaveRoom); // get room by id
 
 export default roomRouter;
