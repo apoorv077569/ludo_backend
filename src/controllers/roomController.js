@@ -77,7 +77,7 @@ export const getRoomById = async (req, res) => {
 
 export const getRoomByUserId = async (req, res) => {
   try {
-    const userId = req.params;
+    const userId = req.params.userId;
 
     if (!userId) {
       res.status(400).json({ message: "userId is required" });
