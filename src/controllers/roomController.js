@@ -1,5 +1,6 @@
 import Room from "../models/Room.js";
 import User from "../models/User.js";
+import roomRouter from "../routes/roomRoutes.js";
 
 // 🔹 Helper to format room consistently
 const formatRoom = (room) => ({
@@ -73,6 +74,26 @@ export const getRoomById = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
+export const getRoomByUserId = async (req, res) => {
+  try {
+    const userId = req.params;
+
+    if (!userId) {
+      res.status(400).json({ message: "userId is required" });
+    }
+    const room = await Room.findOne({ "players.userId": userId }).lean()
+    if (!room) {
+      res.status(404).json({ message: "No room found for this user" });
+    }
+    res.json({
+      message: "room fetched successfully by userId",
+      room:formatRoom(room),
+    });
+  }catch(err){
+    res.status(500).json({mnessage:"Server error",error:err.message});
+  }
+}
 
 // ✅ Join Room
 export const joinRoom = async (req, res) => {
