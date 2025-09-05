@@ -143,3 +143,40 @@ export const deleteRoom = async (req, res) => {
   }
 };
 
+export const leaveRoom = async (req, res) => {
+  try {
+    const { userId } = req.body;
+    const { id: roomId } = req.params;
+
+    const room = await Room.findById(roomId);
+    if (!room) return res.status(404).json({ message: "Room not found" });
+
+    const playerIndex = room.players.findIndex(
+      (p) => p.userId.toString() === userId
+    );
+    if (playerIndex === -1) {
+      return res.status(400).json({ message: "user not in this room" })
+    }
+    room.players.splice(playerIndex, 1)
+
+    if (room.players.length === 0) {
+      await Room.findByIdAndDelete(roomId)
+      return res.json({ message: "Room closed as all players left" });
+    }
+    if (room.status === "full") {
+      room.status = "waiting";
+    }
+    await room.save();
+    res.json({
+      message: "Room left successfully",
+      room: {
+        roomId: room._id,
+        type: room.type,
+        players: room.players,
+        status: room.status
+      },
+    });
+  }catch(err){
+    res.status(500).json({message:"Internal server error",error:err.message});
+  }
+};
