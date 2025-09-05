@@ -142,35 +142,4 @@ export const deleteRoom = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
-export const leaveRoom = async (req, res) => {
-  try {
-    const { userId } = req.body;
-    const { id: roomId } = req.params;
 
-    const room = await Room.findById(roomId);
-    if (!room) return res.status(404).json({ message: "Room not found" });
-
-    room.players = room.players.filter(
-      (p) => p.userId.toString() !== userId
-    );
-    if (room.players.length < room.type) {
-      room.status = "waiting";
-    }
-    if (room.players.length === 0) {
-      await Room.findByIdAndDelete(roomId);
-      return res.json({ message: "Room deleted successfully" });
-    }
-    await room.save();
-    res.json({
-      message: "Player removed succesfully from room",
-      room: {
-        roomId: room._id,
-        type: room.type,
-        players: room.players,
-        status: room.status
-      },
-    });
-  } catch (err) {
-    return res.status(500).json({ message: "Internal server error", error: err.message })
-  }
-};
