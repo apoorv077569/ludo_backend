@@ -101,7 +101,10 @@ const roomSocket = (io, socket) => {
       const formattedRoom = {
         roomId: room._id,
         type: room.type,
-        players: room.players,
+        players: room.players.map((p) => ({
+          userId: p.userId.toString(),
+          username: p.username
+        })),
         status: room.status,
       };
 
