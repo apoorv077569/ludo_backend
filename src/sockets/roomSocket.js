@@ -109,7 +109,7 @@ const roomSocket = (io, socket) => {
       };
 
       // Notify others in the room
-      socket.to(roomId).emit("roomUpdate", formattedRoom);
+      io.to(roomId).emit("roomUpdate", formattedRoom);
 
       // Confirm to the leaving socket
       socket.emit("leftRoom", { roomId });
