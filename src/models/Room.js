@@ -25,4 +25,3 @@ roomSchema.method("toJSON", function () {
 
 const Room = mongoose.model("Room", roomSchema, "rooms");
 export default Room;
-
