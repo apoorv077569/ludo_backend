@@ -15,23 +15,19 @@ const formatRoom = (room) => ({
 // ✅ Create Room
 export const createRoom = async (req, res) => {
   try {
-    const { type, userId } = req.body;
-    if (!type || !userId) {
-      return res.status(400).json({ message: "type and userId are required" });
+    const { type, userId, username } = req.body;
+
+    if (!type || !userId || !username) {
+      return res.status(400).json({ message: "type, userId and username are required" });
     }
 
     if (![2, 4].includes(type)) {
       return res.status(400).json({ message: "Invalid room type. Allowed values are 2 or 4" });
     }
 
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
     const newRoom = new Room({
       type,
-      players: [{ userId: user._id, username: user.username }],
+      players: [{ userId, username }], // Directly use client info
       status: "waiting",
     });
 
@@ -45,6 +41,7 @@ export const createRoom = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
 
 // ✅ Get All Rooms
 export const getRooms = async (req, res) => {
